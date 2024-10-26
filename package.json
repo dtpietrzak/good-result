@@ -1,0 +1,33 @@
+{
+  "name": "good-result",
+  "description": "",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dtpietrzak/good-result.git"
+  },
+  "keywords": [
+    "result",
+    "error as value"
+  ],
+  "author": "David Pietrzak",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dtpietrzak/good-result/issues"
+  },
+  "homepage": "https://github.com/dtpietrzak/good-result#readme",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "@rollup/plugin-typescript": "^11.1.1",
+    "rollup": "^3.26.2",
+    "typescript": "^5.1.6"
+  }
+}
