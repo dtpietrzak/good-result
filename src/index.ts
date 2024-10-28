@@ -41,13 +41,12 @@ export async function result<T, E = Error>(
 export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
-    resultRequired?: boolean,
     errorHandler?: (error: unknown) => NonNullable<E>,
     noResultError?: NoResultError,
   }): Promise<Result<E, T> | Result<E, NonNullable<T>>> {
   try {
     const data = typeof fn === 'function' ? fn() : await fn
-    if (!data && options?.resultRequired) {
+    if (!data && options?.noResultError) {
       if (options?.noResultError) throw options.noResultError
       else throw NoResultError
     }
