@@ -26,7 +26,7 @@ export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError: never,
+    noResultError?: undefined,
   }): Promise<Result<E, T>>
 
 export async function result<T, E = Error>(
