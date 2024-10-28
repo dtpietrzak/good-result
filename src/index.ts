@@ -25,17 +25,15 @@ export const errorOut = <E, T>(error: NonNullable<E>): Result<E, T> => ({
 export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
-    resultRequired?: false,
     errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError?: NoResultError,
+    noResultError?: undefined,
   }): Promise<Result<E, T>>
 
 export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
-    resultRequired?: true,
     errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError?: NoResultError,
+    noResultError: NoResultError,
   }): Promise<Result<E, NonNullable<T>>>
 
 export async function result<T, E = Error>(
