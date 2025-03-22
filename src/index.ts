@@ -15,7 +15,7 @@ export class ResultError extends Error {
   }
 }
 
-type AnyError = typeof Error | HttpResponseError | ResultError;
+export type AnyResultError = typeof Error | HttpResponseError | ResultError;
 
 export type Result<E, T> =
   | { err: NonNullable<E>; val: null }
@@ -31,7 +31,7 @@ export const errorOut = <E>(error: NonNullable<E>): Result<E, never> => ({
   val: null,
 });
 
-export async function result<T, E = AnyError>(
+export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
@@ -39,19 +39,19 @@ export async function result<T, E = AnyError>(
   }
 ): Promise<Result<E, T | null>>;
 
-export async function result<T, E = AnyError>(
+export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError: AnyError; // Forces `null` to be an error
+    noResultError: AnyResultError; // Forces `null` to be an error
   }
 ): Promise<Result<E, NonNullable<T>>>;
 
-export async function result<T, E = AnyError>(
+export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: AnyError;
+    noResultError?: AnyResultError;
   }
 ): Promise<Result<E, T | null>> {
   try {
