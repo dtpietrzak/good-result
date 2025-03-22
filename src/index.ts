@@ -1,6 +1,6 @@
 export class HttpResponseError extends Error {
   code?: number;
-  constructor(message: string = 'Internal Server Error', code: number = 500) {
+  constructor(code: number = 500, message: string = 'An unknown error has occurred') {
     super(message);
     this.name = 'HttpResponseError';
     this.code = code;
