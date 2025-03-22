@@ -15,7 +15,7 @@ export class ResultError extends Error {
   }
 }
 
-export type AnyResultError = typeof Error | HttpResponseError | ResultError;
+export type AnyResultError = Error | HttpResponseError | ResultError;
 
 export type Result<E, T> =
   | { err: NonNullable<E>; val: null }
