@@ -15,6 +15,8 @@ export class ResultError extends Error {
   }
 }
 
+type AnyError = typeof Error | HttpResponseError | ResultError;
+
 export type Result<E, T> =
   | { err: NonNullable<E>; val: null }
   | { err: null; val: NonNullable<T> };
@@ -29,7 +31,7 @@ export const errorOut = <E>(error: NonNullable<E>): Result<E, never> => ({
   val: null,
 });
 
-export async function result<T, E = Error>(
+export async function result<T, E = AnyError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
@@ -37,19 +39,19 @@ export async function result<T, E = Error>(
   }
 ): Promise<Result<E, T | null>>;
 
-export async function result<T, E = Error>(
+export async function result<T, E = AnyError>(
   fn: Promise<T> | (() => T),
   options: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError: typeof Error; // Forces `null` to be an error
+    noResultError: AnyError; // Forces `null` to be an error
   }
 ): Promise<Result<E, NonNullable<T>>>;
 
-export async function result<T, E = Error>(
+export async function result<T, E = AnyError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: typeof Error;
+    noResultError?: AnyError;
   }
 ): Promise<Result<E, T | null>> {
   try {
@@ -59,9 +61,19 @@ export async function result<T, E = Error>(
     }
     return proceed(data as NonNullable<T>);
   } catch (error: unknown) {
-    const handledError =
-      options?.errorHandler?.(error) ??
-      (error instanceof Error ? error : new Error(`Resultify - Unknown error\n${String(fn)}`));
+    let handledError;
+
+    if (options?.errorHandler) {
+      handledError = options.errorHandler(error);
+    } else if (
+      error instanceof Error ||
+      error instanceof HttpResponseError ||
+      error instanceof ResultError
+    ) {
+      handledError = error;
+    } else {
+      handledError = new ResultError(`Unknown error\n${String(fn)}`);
+    }
 
     return errorOut(handledError as NonNullable<E>);
   }
