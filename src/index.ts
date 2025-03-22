@@ -1,9 +1,17 @@
-export class NoResultError extends Error {
+export class HttpResponseError extends Error {
   code?: number;
-  constructor(message: string = 'No result found', code?: number) {
+  constructor(message: string = 'Internal Server Error', code: number = 500) {
     super(message);
-    this.name = 'NoResultError';
+    this.name = 'HttpResponseError';
     this.code = code;
+  }
+}
+
+export class ResultError extends Error {
+  code?: number;
+  constructor(message: string = 'An unknown error has occurred') {
+    super(message);
+    this.name = 'ResultError';
   }
 }
 
@@ -33,7 +41,7 @@ export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError: NoResultError; // Forces `null` to be an error
+    noResultError: typeof Error; // Forces `null` to be an error
   }
 ): Promise<Result<E, NonNullable<T>>>;
 
@@ -41,7 +49,7 @@ export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: NoResultError;
+    noResultError?: typeof Error;
   }
 ): Promise<Result<E, T | null>> {
   try {
