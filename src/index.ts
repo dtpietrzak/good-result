@@ -1,60 +1,60 @@
 export class NoResultError extends Error {
-  code?: number
-  constructor(message?: string, code?: number) {
-    super(message)
-    this.name = 'NoResultError'
-    this.message = message ?? 'No result found'
-    this.code = code
+  code?: number;
+  constructor(message: string = 'No result found', code?: number) {
+    super(message);
+    this.name = 'NoResultError';
+    this.code = code;
   }
 }
 
-export type Result<E, T> = 
+export type Result<E, T> =
   | { err: NonNullable<E>; val: null }
-  | { err: null; val: T };
+  | { err: null; val: NonNullable<T> };
 
-export const proceed = <E, T>(value: T): Result<E, T> => ({
+export const proceed = <T>(value: NonNullable<T>): Result<never, T> => ({
   err: null,
   val: value,
-})
+});
 
-export const errorOut = <E, T>(error: NonNullable<E>): Result<E, T> => ({
+export const errorOut = <E>(error: NonNullable<E>): Result<E, never> => ({
   err: error,
   val: null,
-})
+});
 
 export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
-    errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError?: undefined,
-  }): Promise<Result<E, T>>
+    errorHandler?: (error: unknown) => NonNullable<E>;
+    noResultError?: undefined; // Allows `null` as a valid value
+  }
+): Promise<Result<E, T | null>>;
+
+export async function result<T, E = Error>(
+  fn: Promise<T> | (() => T),
+  options: {
+    errorHandler?: (error: unknown) => NonNullable<E>;
+    noResultError: NoResultError; // Forces `null` to be an error
+  }
+): Promise<Result<E, NonNullable<T>>>;
 
 export async function result<T, E = Error>(
   fn: Promise<T> | (() => T),
   options?: {
-    errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError: NoResultError,
-  }): Promise<Result<E, NonNullable<T>>>
-
-export async function result<T, E = Error>(
-  fn: Promise<T> | (() => T),
-  options?: {
-    errorHandler?: (error: unknown) => NonNullable<E>,
-    noResultError?: NoResultError,
-  }): Promise<Result<E, T> | Result<E, NonNullable<T>>> {
+    errorHandler?: (error: unknown) => NonNullable<E>;
+    noResultError?: NoResultError;
+  }
+): Promise<Result<E, T | null>> {
   try {
-    const data = typeof fn === 'function' ? fn() : await fn
-    if (!data && options?.noResultError) {
-      if (options?.noResultError) throw options.noResultError
-      else throw NoResultError
+    const data = typeof fn === 'function' ? fn() : await fn;
+    if (data === null && options?.noResultError) {
+      throw options.noResultError;
     }
-    return proceed(data)
-  } catch (error) {
-    const handledError = options?.errorHandler 
-      ? options.errorHandler(error) 
-      : error || new Error(
-        `Resultify - Unknown error\n${fn?.toString() ?? fn}`,
-      )
-    return errorOut(handledError as NonNullable<E>)
+    return proceed(data as NonNullable<T>);
+  } catch (error: unknown) {
+    const handledError =
+      options?.errorHandler?.(error) ??
+      (error instanceof Error ? error : new Error(`Resultify - Unknown error\n${String(fn)}`));
+
+    return errorOut(handledError as NonNullable<E>);
   }
 }
