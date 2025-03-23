@@ -17,16 +17,28 @@ export class ResultError extends Error {
 
 export type AnyResultError = Error | HttpResponseError | ResultError;
 
-export type Result<E, T> =
-  | { err: NonNullable<E>; val: null }
-  | { err: null; val: NonNullable<T> };
+export type ErrorResult<E> = { err: NonNullable<E>; val: null };
 
-export const proceed = <T>(value: NonNullable<T>): Result<never, T> => ({
+export type NullableResult<E, T> =
+  | { err: NonNullable<E>; val: null }
+  | { err: null; val: NonNullable<T> }
+  | { err: null; val: null }
+
+export type NonNullableResult<E, T> =
+  | { err: NonNullable<E>; val: null }
+  | { err: null; val: NonNullable<T> }
+
+export const proceed = <T>(value: NonNullable<T>): NonNullableResult<never, T> => ({
   err: null,
   val: value,
 });
 
-export const errorOut = <E>(error: NonNullable<E>): Result<E, never> => ({
+export const proceedNullable = <T>(value: NonNullable<T>): NullableResult<never, T> => ({
+  err: null,
+  val: value,
+});
+
+export const errorOut = <E>(error: NonNullable<E>): ErrorResult<E> => ({
   err: error,
   val: null,
 });
@@ -37,7 +49,7 @@ export async function result<T, E = AnyResultError>(
     errorHandler?: (error: unknown) => NonNullable<E>;
     noResultError?: undefined; // Allows `null` as a valid value
   }
-): Promise<Result<E, T | null>>;
+): Promise<NullableResult<E, T | null>>;
 
 export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
@@ -45,7 +57,7 @@ export async function result<T, E = AnyResultError>(
     errorHandler?: (error: unknown) => NonNullable<E>;
     noResultError: NonNullable<E>; // Forces `null` to be an error
   }
-): Promise<Result<E | AnyResultError, NonNullable<T>>>;
+): Promise<NonNullableResult<E | AnyResultError, NonNullable<T>>>;
 
 export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
@@ -53,13 +65,17 @@ export async function result<T, E = AnyResultError>(
     errorHandler?: (error: unknown) => NonNullable<E>;
     noResultError?: NonNullable<E>;
   }
-): Promise<Result<E | AnyResultError, T | null>> {
+): Promise<NullableResult<E | AnyResultError, T> | NonNullableResult<E | AnyResultError, T>> {
   try {
     const data = typeof fn === 'function' ? fn() : await fn;
-    if (data === null && typeof options?.noResultError !== 'undefined') {
-      return errorOut(options.noResultError)
+    if (typeof options?.noResultError !== 'undefined') {
+      if (data === null) {
+        return errorOut(options.noResultError);
+      } else {
+        return proceed(data as NonNullable<T>) as NonNullableResult<E, T>;
+      }
     }
-    return proceed(data as NonNullable<T>);
+    return proceed(data as NonNullable<T>) as NullableResult<E, T>;
   } catch (error: unknown) {
     let handledError;
 
