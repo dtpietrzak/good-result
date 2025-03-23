@@ -63,14 +63,14 @@ export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: NonNullable<E>;
+    nullError?: NonNullable<E>;
   }
 ): Promise<NullableResult<E | AnyResultError, T> | NonNullableResult<E | AnyResultError, T>> {
   try {
     const data = typeof fn === 'function' ? fn() : await fn;
-    if (typeof options?.noResultError !== 'undefined') {
+    if (typeof options?.nullError !== 'undefined') {
       if (data === null) {
-        return errorOut(options.noResultError);
+        return errorOut(options.nullError);
       } else {
         return proceed(data as NonNullable<T>) as NonNullableResult<E, T>;
       }
