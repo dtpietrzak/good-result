@@ -43,7 +43,7 @@ export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError: AnyResultError; // Forces `null` to be an error
+    noResultError: NonNullable<E>; // Forces `null` to be an error
   }
 ): Promise<Result<E | AnyResultError, NonNullable<T>>>;
 
@@ -51,13 +51,13 @@ export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: E | AnyResultError;
+    noResultError?: NonNullable<E>;
   }
 ): Promise<Result<E | AnyResultError, T | null>> {
   try {
     const data = typeof fn === 'function' ? fn() : await fn;
-    if (data === null && options?.noResultError) {
-      return errorOut(options.noResultError) as Result<E | AnyResultError, null>
+    if (data === null && typeof options?.noResultError !== 'undefined') {
+      return errorOut(options.noResultError)
     }
     return proceed(data as NonNullable<T>);
   } catch (error: unknown) {
