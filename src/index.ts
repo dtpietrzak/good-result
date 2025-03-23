@@ -57,7 +57,7 @@ export async function result<T, E = AnyResultError>(
   try {
     const data = typeof fn === 'function' ? fn() : await fn;
     if (data === null && options?.noResultError) {
-      return errorOut(options.noResultError) as Result<E, T | null>
+      return errorOut(options.noResultError) as Result<E, null>
     }
     return proceed(data as NonNullable<T>);
   } catch (error: unknown) {
