@@ -45,26 +45,27 @@ export async function result<T, E = AnyResultError>(
     errorHandler?: (error: unknown) => NonNullable<E>;
     noResultError: AnyResultError; // Forces `null` to be an error
   }
-): Promise<Result<E, NonNullable<T>>>;
+): Promise<Result<E | AnyResultError, NonNullable<T>>>;
 
 export async function result<T, E = AnyResultError>(
   fn: Promise<T> | (() => T),
   options?: {
     errorHandler?: (error: unknown) => NonNullable<E>;
-    noResultError?: AnyResultError;
+    noResultError?: E | AnyResultError;
   }
-): Promise<Result<E, T | null>> {
+): Promise<Result<E | AnyResultError, T | null>> {
   try {
     const data = typeof fn === 'function' ? fn() : await fn;
     if (data === null && options?.noResultError) {
-      return errorOut(options.noResultError) as Result<E, null>
+      return errorOut(options.noResultError) as Result<E | AnyResultError, null>
     }
     return proceed(data as NonNullable<T>);
   } catch (error: unknown) {
     let handledError;
 
     if (options?.errorHandler) {
-      handledError = options.errorHandler(error);
+      const transformedError = options.errorHandler(error);
+      handledError = transformedError ?? new ResultError('Error handler returned an invalid error');
     } else if (
       error instanceof Error ||
       error instanceof HttpResponseError ||
@@ -72,7 +73,11 @@ export async function result<T, E = AnyResultError>(
     ) {
       handledError = error;
     } else {
-      handledError = new ResultError(`Unknown error\n${String(fn)}`);
+      const newError = new ResultError(`Unknown error\n${String(fn)}`);
+      if (error instanceof Error && error.stack) {
+        newError.stack = error.stack; // Preserve stack trace
+      }
+      handledError = newError;
     }
 
     return errorOut(handledError as NonNullable<E>);
